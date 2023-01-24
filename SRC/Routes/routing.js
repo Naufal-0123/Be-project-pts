@@ -1,143 +1,39 @@
 const express = require("express");
-const path = require("path");
-const fs = require("fs");
-const authMiddleware = require("../middleware/authmiddleware");
-const uploadSingle = require("../../STORAGE/uploadSingle");
-const uploadMulti = require("../../STORAGE/uploadMulti");
 const routers = express.Router();
 // const fs = require('fs-extra');
 const multer = require("multer");
+const { getListUser, createUser, getDetailUserByid, getDetailUserByparams } = require("../controllers/UserController");
+const { getListProduk, createProduk, getDetailProdukByid, getDetailProdukByparams} = require("../controllers/ProdukController");
+const userValidator = require("../validators/userValidator");
+const produkValidator = require("../validators/produkValidator");
+const validationResultMid = require("../middleware/validationResault");
 const upload = multer({ dest: "public" });
 
-// =========================== GET ========================= //
-routers.get("/", (req, res) => {
-  res.send("Hello world");
-});
-routers.get("/user", (req, res) => {
-  res.send({
-    status: 200,
-    message: "Success",
-    data: {
-      nama: "Dzakwan",
-    },
-  });
-});
-// routers.use(authMiddleware)
+// =========================== produk ========================= //
+routers.get("/produk/list", getListProduk);
 
-routers.get("/siswa/:nama", (req, res) => {
-  // let nama = req.params.nama;
-  let { nama } = req.params;
-  let { angkatan, sekolah } = req.query;
+routers.get("/produk/detail/:id",getDetailProdukByid)
 
-  console.log("params =>", req.params);
-  console.log("query =>", req.query);
+routers.get("/produk/list/:brand",getDetailProdukByparams)
 
-  res.send({
-    status: 200,
-    message: "Siswa ditemukan",
-    data: {
-      nama: `${nama}`,
-      kelas: `${req.query.kelas}`,
-      angkatan: `${angkatan}`,
-      sekolah: `${sekolah}`,
-    },
-  });
-});
-routers.get("/absensi/:nama", (req, res) => {
-  // let nama = req.params.nama;
-  let { nama } = req.params;
-  let { status, dari_tanggal, sampai_tanggal } = req.query;
+routers.post(
+    "/produk/create",
+    produkValidator.createProdukValidator,
+    validationResultMid,
+    createProduk
+  );
+// =========================== USERS ========================= //
+routers.get("/user/list", getListUser);
 
-  console.log("params =>", req.params);
-  console.log("query =>", req.query);
+routers.get("/user/detail/:id",getDetailUserByid)
 
-  res.send({
-    status: 200,
-    data: {
-      nama: nama,
-      status: status,
-      dari_tanggal: dari_tanggal,
-      sampai_tanggal: sampai_tanggal,
-    },
-  });
-});
-// =========================== POST ========================= //
-routers.post("/upload/single", uploadSingle, (req, res) => {
-  res.send({
-    status: "Success",
-    message: "Upload Berhasil",
-    file: req.file,
-    url: `${req.protocol}://${req.get("host")}/${req.file.filename}`,
-  });
-});
-routers.post("/upload/multi", uploadMulti, (req, res) => {
-  const files = req.files;
-  const url = files.map((file, index) =>{
-    return `${req.protocol}://${req.get('host')}/${req.files[index].filename}`;
-  })
+routers.get("/user/list/:email",getDetailUserByparams)
 
-  res.send({
-    status: 200,
-    message: 'Upload Success',
-    data: {
-      file: req.files,
-      fileURL: [
-        url
-      ]
-    },
-  });
-});
-
-routers.post("/user/create", (req, res) => {
-  const payload = req.body;
-
-  res.json({
-    status: "Success",
-    message: "Latihan Req body",
-    payload: payload,
-  });
-});
-
-routers.post("/", (req, res) => {
-  res.send("Hello world");
-});
-routers.get("/user", (req, res) => {
-  res.send({
-    status: 200,
-    message: "Success",
-    data: {
-      nama: "Dzakwan",
-    },
-  });
-});
-routers.post("/user", (req, res) => {
-  const { nama, kelas } = req.body;
-  res.send({
-    status: 200,
-    message: "Success",
-    data: {
-      nama: nama,
-      kelas: kelas,
-    },
-  });
-});
-
-// routers.post('/upload', upload.single('file'), (req, res) => {
-//   const file = req.file;
-
-//   if (file) {
-//     const target = path.join(__dirname, 'public', file.originalname);
-//     fs.renameSync(file.path, target);
-//     res.send({
-//       status: 200,
-//       message: 'Success, File uploaded',
-//     });
-//   } else {
-//     res.send({
-//       status: 400,
-//       message: 'Error, File not found',
-//     });
-//   }
-// });
+routers.post(
+  "/user/create",
+  userValidator.createUserValidator,
+  validationResultMid,
+  createUser
+);
 
 module.exports = routers;
