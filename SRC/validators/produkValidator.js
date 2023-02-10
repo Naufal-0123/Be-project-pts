@@ -24,4 +24,12 @@ const createProdukValidator = [
         });
     }),
 ];
-module.exports = { createProdukValidator };
+
+const updateProdukValidator = [
+  check("nama")
+    .isLength({
+      min: 1,
+    })
+    .withMessage("Nama Wajib Di isi"),
+];
+module.exports = { createProdukValidator, updateProdukValidator };

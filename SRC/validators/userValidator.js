@@ -24,4 +24,11 @@ const createUserValidator = [
         });
     }),
 ];
-module.exports = { createUserValidator };
+const updateUserValidator = [
+  check("nama")
+    .isLength({
+      min: 1,
+    })
+    .withMessage("Nama Wajib Di isi"),
+];
+module.exports = { createUserValidator, updateUserValidator };
