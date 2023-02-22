@@ -179,7 +179,7 @@ async function updatePassowordUser(req, res) {
     if (users === null) {
       return res.json({
         status: 404,
-        msg: 'email not found',
+        msg: "email not found",
       });
     }
 
@@ -194,23 +194,64 @@ async function updatePassowordUser(req, res) {
         }
       );
       res.json({
-        status: '200 OK',
-        msg: 'password updated',
+        status: "200 OK",
+        msg: "password updated",
       });
     } else {
       res.json({
-        msg: 'password lama tidak sesuai',
+        msg: "password lama tidak sesuai",
       });
     }
   } catch (err) {
-    console.log('err', err);
+    console.log("err", err);
     res.status(403).json({
-      status: 'failed',
-      msg: 'ada kesalahan update password',
+      status: "failed",
+      msg: "ada kesalahan update password",
       err: err,
     });
   }
 }
+
+const index = async (req, res) => {
+  try {
+    let { keyword, page, pageSize, orderBy, shortBy, pageActive } = req.query;
+
+    const users = await UserModel.findAndCountAll({
+      attributes: ["id", ["name", "nama"], "email", "status", "jenisKelamin"],
+      where: {
+        ...(keyword !== undefined && {
+          [Op.or]: [
+            {
+              name: {
+                [Op.like]: `%${keyword}%`,
+              },
+            },
+            {
+              email: {
+                [Op.like]: `%${keyword}%`,
+              },
+            },
+            {
+              jenisKelamin: {
+                [Op.like]: `%${keyword}%`,
+              },
+            },
+          ],
+        }),
+      },
+      order: [[shortBy, orderBy]],
+      offset: page,
+      limit: pageSize
+    });
+
+    console.log("page", page);
+    console.log("pageSize", pageSize);
+    return res.json({
+      status: "Success",
+      
+    })
+  } catch (err) {}
+};
 
 module.exports = {
   getListUser,
@@ -219,5 +260,5 @@ module.exports = {
   getDetailUserByparams,
   UpdateUser,
   deleteUser,
-  updatePassowordUser
+  updatePassowordUser,
 };

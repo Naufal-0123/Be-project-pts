@@ -1,4 +1,5 @@
 const ArticleModel = require("../models").article;
+const { checkQuery } = require("../Utils");
 const { Op } = require("sequelize");
 // async function getListArticle(req, res) {
 //   try {
@@ -63,6 +64,7 @@ async function getListArticle(req, res) {
     offset,
     page,
     pageSize,
+    isAll,
     shortBy = "id",
     orderBy = "desc",
   } = req.query;
@@ -71,23 +73,31 @@ async function getListArticle(req, res) {
       attributes: {
         exclude: ["createdAt", "updatedAt"],
       },
-      // where: {
-      //   [Op.or]: [
-      //     {
-      //       title: {
-      //         [Op.substring]: keyword,
-      //       },
-      //     },
-      //     {
-      //       description: {
-      //         [Op.substring]: keyword,
-      //       },
-      //     },
-      //   ],
-      //   year: {
-      //     [Op.gte]: year
-      //   }
-      // },
+      where: {
+        ...(checkQuery(isAll) &&
+          isAll != 1 && {
+            userid: req.id,
+          }),
+        ...(checkQuery(keyword) && {
+          [Op.or]: [
+            {
+              title: {
+                [Op.substring]: keyword,
+              },
+            },
+            {
+              description: {
+                [Op.substring]: keyword,
+              },
+            },
+          ],
+        }),
+        ...(checkQuery(year) && {
+          year: {
+            [Op.gte]: year,
+          },
+        }),
+      },
       order: [[shortBy, orderBy]],
       limit: pageSize,
       offset: offset,

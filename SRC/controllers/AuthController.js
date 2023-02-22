@@ -1,19 +1,20 @@
 const UserModel = require("../models").user;
+const PenggunaModel = require("../models").pengguna
 const forgotPasswords = require("../models").password
 const sendEmailHandle = require("../mail/index")
 const bcrypt = require("bcrypt");
 const crypto = require('crypto')
 const dayjs = require("dayjs");
 const jwt = require("jsonwebtoken");
-const user = require("../models/user");
 require('dotenv').config()
 async function register(req, res) {
   try {
     const payload = req.body;
-    const { nama, email, password } = payload;
+    const { nama, email, password, role } = payload;
     let hashPassword = await bcrypt.hashSync(password, 10);
-    await UserModel.create({
+    await PenggunaModel.create({
       nama,
+      role,
       email,
       password: hashPassword,
     });
@@ -24,7 +25,7 @@ async function register(req, res) {
   } catch (err) {
     res.status(403).json({
       status: "Fail",
-      maessage: "Terjadi Kesalahan",
+      message: "Terjadi Kesalahan",
     });
   }
 }
@@ -32,7 +33,7 @@ async function login(req, res) {
   try {
     const payload = req.body;
     const { email, password } = payload;
-    const user = await UserModel.findOne({
+    const user = await PenggunaModel.findOne({
       where: {
         email: email,
       },
@@ -49,16 +50,17 @@ async function login(req, res) {
         message: "Email Dan Password Tidak Cocok",
       });
     }
-    // const verify = await bcrypt.compareSync(password, user.password);
-    // if (verify === false) {
-    //   return res.status(422).json({
-    //     status: "fail",
-    //     message: "Email Dan Password Tidak Cocok",
-    //   });
-    // }
+    const verify = await bcrypt.compareSync(password, user.password);
+    if (verify === false) {
+      return res.status(422).json({
+        status: "fail",
+        message: "Email Dan Password Tidak Cocok",
+      });
+    }
     const token = jwt.sign(
       {
         id: user?.id,
+        role: user?.role,
         name: user?.nama,
         email: user?.email,
       },
@@ -77,7 +79,7 @@ async function login(req, res) {
     console.log(err);
     res.status(403).json({
       status: "Fail",
-      maessage: "Terjadi Kesalahan",
+      message: "Terjadi Kesalahan",
     });
   }
 }
