@@ -38,6 +38,8 @@ const {
   login,
   lupaPassword,
   resetPassword,
+  registerMasyarakat,
+  registerPetugas,
 } = require("../controllers/authController");
 const jwtValidateMid = require("../middleware/JwtValidateMid");
 const {
@@ -51,6 +53,8 @@ const {
 } = require("../controllers/ArticleControllers");
 const { updateArtikelValidator } = require("../validators/artikelValidator");
 const { getListNilai } = require("../controllers/NilaiController");
+const { getListMasyarakat } = require("../controllers/ptsController/MasyarakatController");
+const { getListPetugas } = require("../controllers/ptsController/PetugasController");
 const upload = multer({ dest: "public" });
 
 routers.post("/lupa-password", lupaPassword);
@@ -80,10 +84,15 @@ routers.post(
 
 // =========================== REGISTER & LOGIN ========================= //
 routers.post("/login", login);
-routers.post("/register", register);
+routers.post("/registerM", registerMasyarakat);
+routers.post("/registerP", registerPetugas);
 
 // =========================== IMPLEMENTASI JWT MIDDLEWARE ========================= //
 routers.use(jwtValidateMid.jwtValidateMiddleware);
+
+// =========================== PTS FE & BE ========================= //
+routers.get("/list/masyarakat", getListMasyarakat)
+routers.get("/list/petugas", getListPetugas)
 
 // =========================== PENGGUNA ========================= //
 routers.get("/list/pengguna", getListPengguna);

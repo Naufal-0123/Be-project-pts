@@ -1,7 +1,5 @@
 const NilaiModel = require("../models").nilai;
-const { Op } = require("sequelize");
 const models = require("../models");
-const { checkQuery } = require("../Utils");
 
 async function getListNilai(req, res) {
   const { page, pageSize } = req.query;

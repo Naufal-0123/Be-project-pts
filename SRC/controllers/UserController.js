@@ -101,18 +101,6 @@ async function UpdateUser(req, res) {
         message: "User Tidak Ditemukan",
       });
     }
-    // await UserModel.update(
-    //     {
-    //       nama: nama,
-    //       tempatLahir: tempatLahir,
-    //       tanggalLahir: tanggalLahir
-    //     },
-    //     {
-    //       where: {
-    //         id: id,
-    //       },
-    //     }
-    //   );
     await UserModel.update(
       {
         nama,

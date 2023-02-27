@@ -1,21 +1,23 @@
 const UserModel = require("../models").user;
 const PenggunaModel = require("../models").pengguna
 const forgotPasswords = require("../models").password
+const PetugasModel = require("../models").petugas
+const MasyarakatModel = require("../models").masyarakat
 const sendEmailHandle = require("../mail/index")
 const bcrypt = require("bcrypt");
 const crypto = require('crypto')
 const dayjs = require("dayjs");
 const jwt = require("jsonwebtoken");
 require('dotenv').config()
-async function register(req, res) {
+async function registerMasyarakat(req, res) {
   try {
     const payload = req.body;
-    const { nama, email, password, role } = payload;
+    const { namaLengkap, username, password, telp } = payload;
     let hashPassword = await bcrypt.hashSync(password, 10);
-    await PenggunaModel.create({
-      nama,
-      role,
-      email,
+    await MasyarakatModel.create({
+      namaLengkap,
+      username,
+      telp,
       password: hashPassword,
     });
     res.json({
@@ -23,6 +25,29 @@ async function register(req, res) {
       message: "Register Berhasil",
     });
   } catch (err) {
+    console.log(err);
+    res.status(403).json({
+      status: "Fail",
+      message: "Terjadi Kesalahan",
+    });
+  }
+}
+async function registerPetugas(req, res) {
+  try {
+    const payload = req.body;
+    const { namaPetugas, username, password } = payload;
+    let hashPassword = await bcrypt.hashSync(password, 10);
+    await PetugasModel.create({
+      namaPetugas,
+      username,
+      password: hashPassword,
+    });
+    res.json({
+      status: "Success",
+      message: "Register Berhasil",
+    });
+  } catch (err) {
+    console.log(err);
     res.status(403).json({
       status: "Fail",
       message: "Terjadi Kesalahan",
@@ -41,20 +66,20 @@ async function login(req, res) {
     if (user === null) {
       return res.status(422).json({
         status: "fail",
-        message: "Email Tidak Ditemukan, Silahkan Register",
+        message: "Username Tidak Ditemukan, Silahkan Register",
       });
     }
     if (password === null) {
       return res.status(422).json({
         status: "fail",
-        message: "Email Dan Password Tidak Cocok",
+        message: "Username Dan Password Tidak Cocok",
       });
     }
     const verify = await bcrypt.compareSync(password, user.password);
     if (verify === false) {
       return res.status(422).json({
         status: "fail",
-        message: "Email Dan Password Tidak Cocok",
+        message: "Username Dan Password Tidak Cocok",
       });
     }
     const token = jwt.sign(
@@ -209,4 +234,4 @@ async function resetPassword(req, res) {
     });
   }
 }
-module.exports = { register, login, lupaPassword, resetPassword };
+module.exports = { registerMasyarakat, registerPetugas, login, lupaPassword, resetPassword };
