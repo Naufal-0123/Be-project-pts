@@ -1,4 +1,5 @@
 const express = require('express');
+const cors = require('cors')
 const {sequelize} = require('./SRC/models')
 const routing = require('./SRC/Routes/routing');
 const notFound = require('./SRC/middleware/404');
@@ -10,15 +11,16 @@ const app = express();
 require('dotenv').config()
 const port = process.env.PORT || 8081
 
+
 app.use(express.json())
 app.use(express.static("./STORAGE/upload"))
-// app.use(log);
-app.use(pageMid)
-app.use(consoleMid1);
-app.use(consoleMid2);
+app.use(cors())
+// app.use(pageMid)
+// app.use(consoleMid1);
+// app.use(consoleMid2);
 app.use(routing);
-app.use(errorHandling);
-app.use(notFound);
+// app.use(errorHandling);
+// app.use(notFound);
 
 app.listen(port, async() => {
   try {

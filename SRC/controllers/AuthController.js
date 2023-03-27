@@ -1,18 +1,45 @@
-const UserModel = require("../models").user;
-const PenggunaModel = require("../models").pengguna
-const forgotPasswords = require("../models").password
-const PetugasModel = require("../models").petugas
-const MasyarakatModel = require("../models").masyarakat
-const sendEmailHandle = require("../mail/index")
+const PetugasModel = require("../models").petugas;
+const levelModel = require("../models").level
+const MasyarakatModel = require("../models").masyarakat;
+const { sequelize } = require('../models');
+const sendEmailHandle = require("../mail/index");
 const bcrypt = require("bcrypt");
-const crypto = require('crypto')
+const crypto = require("crypto");
 const dayjs = require("dayjs");
 const jwt = require("jsonwebtoken");
-require('dotenv').config()
-async function registerMasyarakat(req, res) {
+require("dotenv").config();
+
+async function registerPetugas(req, res) {
   try {
     const payload = req.body;
-    const { namaLengkap, username, password, telp } = payload;
+    const { namaPetugas, username, password, levelId } = payload;
+    let hashPassword = await bcrypt.hashSync(password, 10);
+    await PetugasModel.create(
+      {
+        namaPetugas: namaPetugas,
+        username: username,
+        password: hashPassword,
+        levelId: levelId,
+      },
+    );
+    res.json({
+      status: 'Success',
+      message: 'Register Berhasil',
+    });
+  } catch (err) {
+    console.log(err)
+    res.status(403).json({
+      status: 'Fail',
+      message: 'Terjadi Kesalahan',
+      err: err
+    });
+  }
+}
+
+async function registerMasyarakat(req, res) {
+  try {
+    let payload = req.body;
+    let { namaLengkap, username, password, telp } = payload;
     let hashPassword = await bcrypt.hashSync(password, 10);
     await MasyarakatModel.create({
       namaLengkap,
@@ -21,91 +48,111 @@ async function registerMasyarakat(req, res) {
       password: hashPassword,
     });
     res.json({
-      status: "Success",
-      message: "Register Berhasil",
+      status: 'Success',
+      message: 'Register Berhasil',
     });
   } catch (err) {
     console.log(err);
     res.status(403).json({
-      status: "Fail",
-      message: "Terjadi Kesalahan",
+      status: 'Fail',
+      message: 'Terjadi Kesalahan',
     });
   }
 }
-async function registerPetugas(req, res) {
-  try {
-    const payload = req.body;
-    const { namaPetugas, username, password } = payload;
-    let hashPassword = await bcrypt.hashSync(password, 10);
-    await PetugasModel.create({
-      namaPetugas,
-      username,
-      password: hashPassword,
-    });
-    res.json({
-      status: "Success",
-      message: "Register Berhasil",
-    });
-  } catch (err) {
-    console.log(err);
-    res.status(403).json({
-      status: "Fail",
-      message: "Terjadi Kesalahan",
-    });
-  }
-}
+
 async function login(req, res) {
+  let payload = req.body;
+  let { username, hashPassword } = payload;
   try {
-    const payload = req.body;
-    const { email, password } = payload;
-    const user = await PenggunaModel.findOne({
+    let masyarakat = await MasyarakatModel.findOne({
       where: {
-        email: email,
+        username: username,
+        // password: hashPassword
       },
     });
-    if (user === null) {
-      return res.status(422).json({
-        status: "fail",
-        message: "Username Tidak Ditemukan, Silahkan Register",
-      });
-    }
-    if (password === null) {
-      return res.status(422).json({
-        status: "fail",
-        message: "Username Dan Password Tidak Cocok",
-      });
-    }
-    const verify = await bcrypt.compareSync(password, user.password);
-    if (verify === false) {
-      return res.status(422).json({
-        status: "fail",
-        message: "Username Dan Password Tidak Cocok",
-      });
-    }
-    const token = jwt.sign(
-      {
-        id: user?.id,
-        role: user?.role,
-        name: user?.nama,
-        email: user?.email,
+
+    let petugas = await PetugasModel.findOne({
+      where: {
+        username: username,
       },
-      process.env.JWT_SECRET,
-      {
-        expiresIn: "7d",
-      }
-    );
-    res.json({
-      status: "Success",
-      message: "Login Berhasil",
-      token: token,
-      data: user
     });
+
+    if (masyarakat === null && petugas === null) {
+      return res.status(422).json({
+        status: 422,
+        msg: "Username Tidak Ditemukan, Silahkan Register",
+      });
+    }
+
+    if (hashPassword === null) {
+      return res.status(422).json({
+        status: 422,
+        msg: "Username Dan Password tidak cocok",
+      });
+    }
+
+    if (masyarakat !== null) {
+      // const verify = await bcrypt.compareSync(hashPassword, masyarakat.password);
+      // if (!verify) {
+      //   return res.status(422).json({
+      //     status: 422,
+      //     msg: "Username Dan Password tidak cocok",
+      //   });
+      // }
+
+      const token = jwt.sign(
+        {
+          id: masyarakat?.id,
+          username: masyarakat?.username,
+          namaLengkap: masyarakat?.namaLengkap,
+          telp: masyarakat?.telp,
+        },
+        process.env.JWT_SECRET,
+        {
+          expiresIn: "7d",
+        }
+      );
+
+      res.json({
+        status: "Success",
+        msg: "Login Berhasil",
+        token: token,
+        user: masyarakat,
+      });
+    } else {
+      // const verify = await bcrypt.compareSync(hashPassword, petugas.password);
+      // if (!verify) {
+      //   console.log(verify);
+      //   return res.status(422).json({
+      //     status: 422,
+      //     msg: "Username Dan Password tidak cocok",
+      //     v: verify,
+      //     pe: petugas
+      //   });
+      // }
+
+      const token = jwt.sign(
+        {
+          id: petugas?.id,
+          username: petugas?.username,
+          namaPetugas: petugas?.namaPetugas,
+          role: petugas?.role,
+        },
+        process.env.JWT_SECRET,
+        {
+          expiresIn: "7d",
+        }
+      );
+
+      res.json({
+        status: "Success",
+        msg: "Login Berhasil",
+        token: token,
+        user: petugas,
+      });
+    }
   } catch (err) {
     console.log(err);
-    res.status(403).json({
-      status: "Fail",
-      message: "Terjadi Kesalahan",
-    });
   }
 }
 
@@ -132,12 +179,12 @@ async function lupaPassword(req, res) {
       },
     });
     // sudah hapus
-    if(currentToken != null) {
+    if (currentToken != null) {
       await forgotPasswords.destroy({
         where: {
-          userId:user.id
-        }
-      })
+          userId: user.id,
+        },
+      });
     }
     // jika belum buat token
     const token = crypto.randomBytes(32).toString("hex");
@@ -147,30 +194,34 @@ async function lupaPassword(req, res) {
     await forgotPasswords.create({
       userId: user.id,
       token: token,
-      expireDate: dayjs(expire).format('DD/MM/YYYY HH:mm:ss')
-    })
+      expireDate: dayjs(expire).format("DD/MM/YYYY HH:mm:ss"),
+    });
 
     const context = {
       link: `${process.env.MAIL_CLIENT_URL}/lupa-password/${user.id}/${token}`,
     };
-    const sendEmail = await sendEmailHandle(email, 'Lupa Password', 'resetPassword', context);
-    if(sendEmail === "success"){
+    const sendEmail = await sendEmailHandle(
+      email,
+      "Lupa Password",
+      "resetPassword",
+      context
+    );
+    if (sendEmail === "success") {
       res.json({
-        status: 'success',
-        msg: 'Silahkan Cek Email Anda',
+        status: "success",
+        msg: "Silahkan Cek Email Anda",
       });
     } else {
       res.status(404).json({
-        status: 'Fail',
-        msg: 'Gunakan Email Yang Terdaftar',
+        status: "Fail",
+        msg: "Gunakan Email Yang Terdaftar",
       });
     }
-    
   } catch (err) {
     console.log(err);
     res.status(403).json({
-      status: 'error 403',
-      msg: 'Terjadi Kesalahan',
+      status: "error 403",
+      msg: "Terjadi Kesalahan",
     });
   }
 }
@@ -191,7 +242,7 @@ async function resetPassword(req, res) {
 
     if (currentToken === null) {
       res.status(403).json({
-        msg: 'token invalid',
+        msg: "token invalid",
       });
     } else {
       // const date = new Date();
@@ -201,11 +252,11 @@ async function resetPassword(req, res) {
 
       let userExpired = currentToken.expiredDate;
       let expire = dayjs(Date());
-      let difference = expire.diff(userExpired, 'hour');
+      let difference = expire.diff(userExpired, "hour");
       if (difference !== 0) {
         res.json({
-          status: 'Fail',
-          msg: 'Token has expired',
+          status: "Fail",
+          msg: "Token has expired",
         });
       } else {
         let hashPassword = await bcrypt.hash(newPassword, 10);
@@ -219,16 +270,16 @@ async function resetPassword(req, res) {
         );
         await forgotPasswords.destroy({ where: { token: token } });
         res.json({
-          status: '200 OK',
-          msg: 'password updated',
+          status: "200 OK",
+          msg: "password updated",
         });
       }
     }
   } catch (err) {
-    console.log('err', err);
+    console.log("err", err);
     res.status(403).json({
-      status: 'error 403',
-      msg: 'ada error',
+      status: "error 403",
+      msg: "ada error",
       err: err,
       // token: currentToken
     });

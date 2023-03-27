@@ -1,8 +1,10 @@
 const errorHandler = (err, req, res, next) => {
-    res.status(500).json({
-      status: 'error',
-      message: 'terjadi kesalahan pada server',
-    });
-  };
-  
-  module.exports = errorHandler;
+  console.log(err);
+  res.status(500).json({
+    status: "error",
+    message: "terjadi kesalahan pada server",
+    err,
+  });
+};
+
+module.exports = errorHandler;

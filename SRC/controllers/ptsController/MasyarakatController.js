@@ -9,6 +9,7 @@ async function getListMasyarakat(req, res) {
         data: users,
       });
     } catch (err) {
+      console.log(err);
       res.status(403).json({
         status: "Fail",
         maessage: "Terjadi Kesalahan",
